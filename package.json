@@ -11,6 +11,8 @@
   "dependencies": {
     "@ffmpeg/core": "^0.12.6",
     "@ffmpeg/ffmpeg": "^0.12.10",
+    "file-type": "^19.5.0",
+    "jszip": "^3.10.1",
     "next": "14.2.13",
     "react": "^18",
     "react-dom": "^18"
