@@ -1,17 +1,10 @@
+import { ThemeProvider } from "@/components/theme-provider"
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
+import { Layers, Video, Zap } from 'lucide-react';
+import { Inter } from 'next/font/google';
+const inter = Inter({ subsets: ['latin'] });
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -24,12 +17,51 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+      <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${inter.className} bg-gray-900 text-gray-100`}
       >
-        {children}
+      <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+      >
+          <div className="min-h-screen flex flex-col">
+              <header className="bg-gray-800 p-4">
+                  <h1 className="text-2xl font-bold text-center">MechVid</h1>
+              </header>
+              <nav className="bg-gray-700 p-2">
+                  <ul className="flex justify-around">
+                      <li>
+                          <a href="#" className="flex flex-col items-center">
+                              <Video className="w-6 h-6"/>
+                              <span className="text-xs">上传</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="#" className="flex flex-col items-center">
+                              <Layers className="w-6 h-6"/>
+                              <span className="text-xs">转换</span>
+                          </a>
+                      </li>
+                      <li>
+                          <a href="#" className="flex flex-col items-center">
+                              <Zap className="w-6 h-6"/>
+                              <span className="text-xs">压缩</span>
+                          </a>
+                      </li>
+                  </ul>
+              </nav>
+              <div className="flex-grow p-4">
+                  {children}
+              </div>
+              <footer className="bg-gray-800 p-4 text-center text-sm">
+                  © 2024 MechVid. All rights reserved.
+              </footer>
+          </div>
+          </ThemeProvider>
       </body>
-    </html>
-  );
+      </html>
+);
 }
