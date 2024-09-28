@@ -59,7 +59,10 @@ const FFmpegOnline: React.FC = () => {
         try {
             const ffmpegInstance = new FFmpeg();
             ffmpegInstance.on('log', ({ message }) => {
-                setLogs(prevLogs => [...prevLogs, message]);
+                setLogs(prevLogs => {
+                    const newLogs = [...prevLogs, message];
+                    return newLogs.slice(-5); // 只保留最新的10条日志
+                });
             });
             ffmpegInstance.on('progress', ({ progress }) => {
                 setProgress(Math.round(progress * 100));
@@ -247,7 +250,25 @@ const FFmpegOnline: React.FC = () => {
                 <Button onClick={runFFmpeg} disabled={!ready || !selectedFile}>
                     {ready ? '运行' : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 </Button>
-                {progress > 0 && <progress value={progress} max="100" className="w-full" />}
+                {progress > 0 && (
+                    <div className="relative pt-1">
+                        <div className="flex mb-2 items-center justify-between">
+                            <div>
+                                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-teal-600 bg-teal-200">
+                                    进度
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs font-semibold inline-block text-teal-600">
+                                    {progress}%
+                                </span>
+                            </div>
+                        </div>
+                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-teal-200">
+                            <div style={{ width: `${progress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-500"></div>
+                        </div>
+                    </div>
+                )}
                 <p className="text-sm text-gray-600">{message}</p>
                 {outputUrl && (
                     <div className="mt-2">
@@ -261,7 +282,7 @@ const FFmpegOnline: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-                <h2 className="text-lg font-semibold">4. 日志</h2>
+                <h2 className="text-lg font-semibold">4. 日志（最新5条）</h2>
                 <div 
                     ref={logsRef}
                     className="h-40 overflow-y-auto border border-gray-300 rounded p-2"
