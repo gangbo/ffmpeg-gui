@@ -14,6 +14,19 @@ const nextConfig = {
         }
         return config;
     },
+    async headers() {
+        return [
+            {
+                source: "/static/:all*",
+                headers: [
+                    {
+                        key: 'Cache-Control',
+                        value: 'public, max-age=9999999999, must-revalidate',
+                    }
+                ],
+            },
+        ];
+    },
 };
 
 export default nextConfig;
