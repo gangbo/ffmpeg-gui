@@ -1,11 +1,11 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Inbox, Loader2, X } from 'lucide-react';
-import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
+import React, {useState, useEffect, useRef} from 'react';
+import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Inbox, Loader2, X} from 'lucide-react';
+import {FFmpeg} from '@ffmpeg/ffmpeg'
+import {fetchFile, toBlobURL} from '@ffmpeg/util'
 
 const baseURL = '/static/v0-12-6'
 
@@ -14,22 +14,45 @@ const FFmpegOnline: React.FC = () => {
     const [ready, setReady] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [fileInfo, setFileInfo] = useState<string>('');
-    const [outputOptions, setOutputOptions] = useState<string>('-c:v libx264 -crf 23');
+    const [outputFormat, setOutputFormat] = useState<string>('mp4');
     const [outputFileName, setOutputFileName] = useState<string>('output.mp4');
     const [outputFileSize, setOutputFileSize] = useState<string>('');
     const [message, setMessage] = useState<string>('');
     const [progress, setProgress] = useState<number>(0);
     const [outputUrl, setOutputUrl] = useState<string>('');
     const [logs, setLogs] = useState<string[]>([]);
+    const [resolution, setResolution] = useState<string>('original');
+    const [selectedEncoder, setSelectedEncoder] = useState<string>('copy');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const logsRef = useRef<HTMLDivElement>(null);
 
-    const commonOptions = [
-        { label: 'H.264 编码 (默认)', value: '-c:v libx264 -crf 23' },
-        { label: 'H.265 编码', value: '-c:v libx265 -crf 28' },
-        { label: 'VP9 编码', value: '-c:v libvpx-vp9 -crf 30 -b:v 0' },
-        { label: '降低分辨率 (720p)', value: '-vf scale=-1:720 -c:v libx264 -crf 23' },
-        { label: 'GIF 转换', value: '-vf "fps=15,scale=320:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0' },
+    const resolutionOptions = [
+        {label: '原始分辨率', value: 'original'},
+        {label: '4K (3840x2160)', value: '3840:2160'},
+        {label: '1080p (1920x1080)', value: '1920:1080'},
+        {label: '720p (1280x720)', value: '1280:720'},
+        {label: '480p (854x480)', value: '854:480'},
+    ];
+
+    const formatOptions = [
+        { label: 'MP4', value: 'mp4' },
+        { label: 'WebM', value: 'webm' },
+        { label: 'MKV', value: 'mkv' },
+        { label: 'AVI', value: 'avi' },
+        { label: 'MOV', value: 'mov' },
+        { label: 'FLV', value: 'flv' },
+        { label: 'WMV', value: 'wmv' },
+        { label: 'MP3', value: 'mp3' },
+        { label: 'WAV', value: 'wav' },
+    ];
+
+    const encoderOptions = [
+        { label: '复制编码（不重新编码）', value: 'copy' },
+        { label: 'libx264', value: 'libx264' },
+        { label: 'libx265', value: 'libx265' },
+        { label: 'libvpx-vp9', value: 'libvpx-vp9' },
+        { label: 'libmp3lame', value: 'libmp3lame' },
+        { label: 'aac', value: 'aac' },
     ];
 
     useEffect(() => {
@@ -43,28 +66,25 @@ const FFmpegOnline: React.FC = () => {
     }, [logs]);
 
     useEffect(() => {
-        if (selectedFile && outputOptions) {
+        if (selectedFile && resolution && selectedEncoder && outputFormat) {
             const baseFileName = selectedFile.name.split('.').slice(0, -1).join('.');
-            const extension = outputOptions.includes('gif') ? 'gif' : 'mp4';
-            const sanitizedOptions = outputOptions
-                .replace(/[^\w\s-]/g, '_')
-                .replace(/\s+/g, '_')
-                .substring(0, 20);
-            const newFileName = `${baseFileName}_${sanitizedOptions}.${extension}`;
+            const resolutionSuffix = resolution === 'original' ? '' : `_${resolution.replace(':', 'x')}`;
+            const encoderSuffix = selectedEncoder === 'copy' ? '' : `_${selectedEncoder}`;
+            const newFileName = `${baseFileName}${resolutionSuffix}${encoderSuffix}.${outputFormat}`;
             setOutputFileName(newFileName.replace(/\s+/g, '_'));
         }
-    }, [selectedFile, outputOptions]);
+    }, [selectedFile, resolution, selectedEncoder, outputFormat]);
 
     const load = async () => {
         try {
             const ffmpegInstance = new FFmpeg();
-            ffmpegInstance.on('log', ({ message }) => {
+            ffmpegInstance.on('log', ({message}) => {
                 setLogs(prevLogs => {
                     const newLogs = [...prevLogs, message];
                     return newLogs.slice(-5); // 只保留最新的10条日志
                 });
             });
-            ffmpegInstance.on('progress', ({ progress }) => {
+            ffmpegInstance.on('progress', ({progress}) => {
                 setProgress(Math.round(progress * 100));
             });
 
@@ -132,7 +152,23 @@ const FFmpegOnline: React.FC = () => {
             const fileData = await fetchFile(selectedFile);
             await ffmpeg.writeFile('input.mp4', fileData);
 
-            await ffmpeg.exec(['-i', 'input.mp4', ...outputOptions.split(' '), outputFileName]);
+            let ffmpegCommand = ['-i', 'input.mp4'];
+
+            if (resolution !== 'original') {
+                ffmpegCommand.push('-vf', `scale=${resolution}`);
+            }
+
+            if (selectedEncoder !== 'copy') {
+                if (outputFormat === 'mp3' || outputFormat === 'wav') {
+                    ffmpegCommand.push('-c:a', selectedEncoder);
+                } else {
+                    ffmpegCommand.push('-c:v', selectedEncoder);
+                }
+            }
+
+            ffmpegCommand.push(outputFileName);
+
+            await ffmpeg.exec(ffmpegCommand);
 
             setMessage('转换完成！');
 
@@ -190,12 +226,12 @@ const FFmpegOnline: React.FC = () => {
                                 e.stopPropagation();
                                 clearFile();
                             }}>
-                                <X className="h-4 w-4" />
+                                <X className="h-4 w-4"/>
                             </Button>
                         </div>
                     ) : (
                         <>
-                            <Inbox className="mx-auto h-12 w-12 text-gray-400" />
+                            <Inbox className="mx-auto h-12 w-12 text-gray-400"/>
                             <p className="mt-2">点击或拖拽文件</p>
                         </>
                     )}
@@ -215,14 +251,40 @@ const FFmpegOnline: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-                <h2 className="text-lg font-semibold">2. 设置 ffmpeg 选项</h2>
-                <p className="font-medium">ffmpeg</p>
-                <Select onValueChange={(value) => setOutputOptions(value)}>
+                <h2 className="text-lg font-semibold">2. 设置输出选项</h2>
+                <p className="font-medium">选择输出格式</p>
+                <Select onValueChange={(value) => setOutputFormat(value)}>
                     <SelectTrigger className="w-full">
-                        <SelectValue placeholder="选择预设选项或自定义" />
+                        <SelectValue placeholder="选择输出格式"/>
                     </SelectTrigger>
                     <SelectContent>
-                        {commonOptions.map((option, index) => (
+                        {formatOptions.map((option, index) => (
+                            <SelectItem key={index} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <p className="font-medium">选择输出分辨率</p>
+                <Select onValueChange={(value) => setResolution(value)}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择输出分辨率"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {resolutionOptions.map((option, index) => (
+                            <SelectItem key={index} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <p className="font-medium mt-2">选择编码器</p>
+                <Select onValueChange={(value) => setSelectedEncoder(value)}>
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择编码器"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {encoderOptions.map((option, index) => (
                             <SelectItem key={index} value={option.value}>
                                 {option.label}
                             </SelectItem>
@@ -230,31 +292,28 @@ const FFmpegOnline: React.FC = () => {
                     </SelectContent>
                 </Select>
                 <Input
-                    placeholder="请输入输出选项"
-                    value={outputOptions}
-                    onChange={(e) => setOutputOptions(e.target.value)}
-                    className="mb-2"
-                />
-                <Input
                     value={outputFileName}
                     onChange={(e) => setOutputFileName(e.target.value)}
                     className="mb-2"
                 />
                 <p className="text-sm text-gray-600">
-                    ffmpeg -i {selectedFile?.name || ''} {outputOptions} {outputFileName}
+                    ffmpeg -i {selectedFile?.name || ''}
+                    {resolution !== 'original' ? ` -vf scale=${resolution}` : ''}
+                    {selectedEncoder !== 'copy' ? (outputFormat === 'mp3' || outputFormat === 'wav' ? ` -c:a ${selectedEncoder}` : ` -c:v ${selectedEncoder}`) : ''} {outputFileName}
                 </p>
             </div>
 
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold">3. 运行并获取输出文件</h2>
                 <Button onClick={runFFmpeg} disabled={!ready || !selectedFile}>
-                    {ready ? '运行' : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {ready ? '运行' : <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                 </Button>
                 {progress > 0 && (
                     <div className="relative pt-1">
                         <div className="flex mb-2 items-center justify-between">
                             <div>
-                                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-teal-600 bg-teal-200">
+                                <span
+                                    className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-teal-600 bg-teal-200">
                                     进度
                                 </span>
                             </div>
@@ -265,7 +324,8 @@ const FFmpegOnline: React.FC = () => {
                             </div>
                         </div>
                         <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-teal-200">
-                            <div style={{ width: `${progress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-500"></div>
+                            <div style={{width: `${progress}%`}}
+                                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-500"></div>
                         </div>
                     </div>
                 )}
@@ -274,7 +334,7 @@ const FFmpegOnline: React.FC = () => {
                     <div className="mt-2">
                         <Button onClick={downloadOutput}>下载输出文件</Button>
                         <p className="text-sm text-gray-600 mt-1">
-                            文件名: {outputFileName}<br />
+                            文件名: {outputFileName}<br/>
                             文件大小: {outputFileSize}
                         </p>
                     </div>
@@ -283,7 +343,7 @@ const FFmpegOnline: React.FC = () => {
 
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold">4. 日志（最新5条）</h2>
-                <div 
+                <div
                     ref={logsRef}
                     className="h-40 overflow-y-auto border border-gray-300 rounded p-2"
                 >
@@ -296,7 +356,7 @@ const FFmpegOnline: React.FC = () => {
             {outputUrl && (
                 <div className="space-y-2">
                     <h2 className="text-lg font-semibold">5. 预览</h2>
-                    <video src={outputUrl} controls className="w-full md:w-1/2 mx-auto" />
+                    <video src={outputUrl} controls className="w-full md:w-1/2 mx-auto"/>
                 </div>
             )}
         </div>
