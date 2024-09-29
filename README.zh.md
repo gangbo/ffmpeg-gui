@@ -17,10 +17,10 @@
 您可以使用以下一键部署链接将此项目部署到Vercel或Cloudflare:
 
 - 部署到Vercel:
-  [![使用Vercel部署](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/gangyang/ffmpeg-gui)
+  [![使用Vercel部署](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/gangbo/ffmpeg-gui)
 
 - 部署到Cloudflare:
-  [![部署到Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/gangyang/ffmpeg-gui)
+  [![部署到Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/gangbo/ffmpeg-gui)
 
 注意:请将上述链接中的`gangbo/ffmpeg-gui`替换为您实际的GitHub用户名和仓库名。
 
