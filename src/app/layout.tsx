@@ -1,7 +1,7 @@
 import {ThemeProvider} from "@/components/theme-provider"
 import type {Metadata} from "next";
 import "./globals.css";
-import {Zap} from 'lucide-react';
+import {Zap, Github} from 'lucide-react';
 import {Inter} from 'next/font/google';
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -37,14 +37,19 @@ export default function RootLayout({
                                 </a>
                             </li>
                         </ul>
-                        <ThemeToggle />
+                        <div className="flex items-center space-x-4">
+                            <a href="https://github.com/gangbo/ffmpeg-gui" target="_blank" rel="noopener noreferrer" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                                <Github className="w-6 h-6" />
+                            </a>
+                            <ThemeToggle />
+                        </div>
                     </nav>
                 </header>
                 <div className="flex-grow">
                     {children}
                 </div>
                 <footer className="bg-gray-200 dark:bg-gray-800 p-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                    © 2024 FFmpeg GUI. All rights reserved.
+                    © 2024 FFmpeg GUI. 保留所有权利。
                 </footer>
             </div>
         </ThemeProvider>
