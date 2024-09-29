@@ -234,29 +234,29 @@ const FFmpegGui: React.FC = () => {
     };
 
     return (
-        <div className="relative max-w-2xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold mb-6">FFmpeg GUI</h1>
+        <div className="max-w-3xl mx-auto p-6 space-y-8">
+            <h1 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">FFmpeg GUI</h1>
 
-            <div className="space-y-2">
-                <h2 className="text-lg font-semibold">1. Select File</h2>
-                <p className="text-sm text-gray-600">Your file will not be uploaded to the server, it will only be processed in the browser</p>
+            <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">1. Select File</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Your file will be processed in the browser and not uploaded to any server</p>
                 <div
-                    className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer"
+                    className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 transition-colors duration-200"
                     onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                 >
-                    {selectedFile && (
+                    {selectedFile ? (
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between p-2 bg-gray-100 rounded">
+                            <div className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded">
                                 <div className="flex-grow overflow-hidden">
-                                    <p className="text-sm font-medium truncate">{fileInfo?.name}</p>
-                                    <p className="text-xs text-gray-500">{fileInfo?.size}</p>
+                                    <p className="text-sm font-medium truncate text-gray-800 dark:text-gray-200">{fileInfo?.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{fileInfo?.size}</p>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
+                                    className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         clearFile();
@@ -266,11 +266,10 @@ const FFmpegGui: React.FC = () => {
                                 </Button>
                             </div>
                         </div>
-                    )}
-                    {!selectedFile && (
+                    ) : (
                         <>
-                            <Inbox className="mx-auto h-12 w-12 text-gray-400"/>
-                            <p className="mt-2">Click or drag a file</p>
+                            <Inbox className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"/>
+                            <p className="mt-2 text-gray-600 dark:text-gray-400">Click or drag file to this area to upload</p>
                         </>
                     )}
                     <input
@@ -283,28 +282,29 @@ const FFmpegGui: React.FC = () => {
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <h2 className="text-lg font-semibold">2. Set Output Options</h2>
-                <p className="font-medium">Select Output Format</p>
-                <Select onValueChange={(value) => setOutputFormat(value)}>
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Output Format"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {formatOptions.map((option, index) => (
-                            <SelectItem key={index} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {/* 只有在选择视频格式时才显示分辨率选项 */}
+            <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">2. Set Output Options</h2>
+                <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Output Format</label>
+                    <Select onValueChange={(value) => setOutputFormat(value)}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select output format"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {formatOptions.map((option, index) => (
+                                <SelectItem key={index} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 {!['mp3', 'wav'].includes(outputFormat) && (
-                    <>
-                        <p className="font-medium">Select Output Resolution</p>
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Output Resolution</label>
                         <Select onValueChange={(value) => setResolution(value)}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select Output Resolution"/>
+                                <SelectValue placeholder="Select output resolution"/>
                             </SelectTrigger>
                             <SelectContent>
                                 {resolutionOptions.map((option, index) => (
@@ -314,42 +314,47 @@ const FFmpegGui: React.FC = () => {
                                 ))}
                             </SelectContent>
                         </Select>
-                    </>
+                    </div>
                 )}
-                <p className="font-medium mt-2">Select Encoder</p>
-                <Select 
-                    onValueChange={(value) => setSelectedEncoder(value)} 
-                    value={selectedEncoder}
-                >
-                    <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Encoder"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {getEncoderOptions().map((option, index) => (
-                            <SelectItem key={index} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Input
-                    value={outputFileName}
-                    onChange={(e) => setOutputFileName(e.target.value)}
-                    className="mb-2"
-                />
-                <p className="text-sm text-gray-600">
+                <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Encoder</label>
+                    <Select 
+                        onValueChange={(value) => setSelectedEncoder(value)} 
+                        value={selectedEncoder}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select encoder"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {getEncoderOptions().map((option, index) => (
+                                <SelectItem key={index} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Output Filename</label>
+                    <Input
+                        value={outputFileName}
+                        onChange={(e) => setOutputFileName(e.target.value)}
+                        className="w-full"
+                    />
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-2 rounded">
                     ffmpeg -i {selectedFile?.name || ''}
                     {resolution !== 'original' ? ` -vf scale=${resolution}` : ''}
                     {selectedEncoder !== 'copy' ? (outputFormat === 'mp3' || outputFormat === 'wav' ? ` -c:a ${selectedEncoder}` : ` -c:v ${selectedEncoder}`) : ''} {outputFileName}
                 </p>
             </div>
 
-            <div className="space-y-2">
-                <h2 className="text-lg font-semibold">3. Run and Get Output File</h2>
+            <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">3. Run and Get Output File</h2>
                 <Button 
                     onClick={runFFmpeg} 
                     disabled={!ready || !selectedFile || isLoading || isProcessing} 
-                    className="w-full md:w-48 mx-auto flex"
+                    className="w-full md:w-48 mx-auto flex justify-center"
                 >
                     {isLoading ? (
                         <>
@@ -372,33 +377,33 @@ const FFmpegGui: React.FC = () => {
                     <div className="relative pt-1">
                         <div className="flex mb-2 items-center justify-between">
                             <div className="text-right">
-                                <span className="text-xs font-semibold inline-block text-blue-600">
+                                <span className="text-xs font-semibold inline-block text-blue-600 dark:text-blue-400">
                                     {progress}%
                                 </span>
                             </div>
                         </div>
-                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200 dark:bg-blue-700">
                             <div style={{width: `${progress}%`}}
                                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
                         </div>
                     </div>
                 )}
-                <p className="text-sm text-gray-600">{message}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
                 {outputUrl && (
-                    <div className="mt-2">
-                        <Button onClick={downloadOutput}>Download Output File</Button>
-                        <p className="text-sm text-gray-600 mt-1">
-                            File Name: {outputFileName}<br/>
-                            File Size: {outputFileSize}
+                    <div className="mt-4">
+                        <Button onClick={downloadOutput} className="w-full md:w-auto">Download Output File</Button>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            Filename: {outputFileName}<br/>
+                            File size: {outputFileSize}
                         </p>
                     </div>
                 )}
             </div>
 
             {outputUrl && (
-                <div className="space-y-2">
-                    <h2 className="text-lg font-semibold">5. Preview</h2>
-                    <video src={outputUrl} controls className="w-full md:w-1/2 mx-auto"/>
+                <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">4. Preview</h2>
+                    <video src={outputUrl} controls className="w-full md:w-2/3 mx-auto rounded-lg shadow-lg"/>
                 </div>
             )}
         </div>
