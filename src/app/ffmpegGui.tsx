@@ -9,11 +9,16 @@ import {fetchFile, toBlobURL} from '@ffmpeg/util'
 
 const baseURL = '/static/v0-12-6'
 
+interface FileInfo {
+    name: string;
+    size: string;
+}
+
 const FFmpegOnline: React.FC = () => {
     const [ffmpeg, setFfmpeg] = useState<FFmpeg | null>(null);
     const [ready, setReady] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [fileInfo, setFileInfo] = useState<string>('');
+    const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
     const [outputFormat, setOutputFormat] = useState<string>('mp4');
     const [outputFileName, setOutputFileName] = useState<string>('output.mp4');
     const [outputFileSize, setOutputFileSize] = useState<string>('');
@@ -25,6 +30,7 @@ const FFmpegOnline: React.FC = () => {
     const [selectedEncoder, setSelectedEncoder] = useState<string>('copy');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const logsRef = useRef<HTMLDivElement>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const resolutionOptions = [
         {label: '原始分辨率', value: 'original'},
@@ -76,6 +82,7 @@ const FFmpegOnline: React.FC = () => {
     }, [selectedFile, resolution, selectedEncoder, outputFormat]);
 
     const load = async () => {
+        setIsLoading(true);
         try {
             const ffmpegInstance = new FFmpeg();
             ffmpegInstance.on('log', ({message}) => {
@@ -98,6 +105,8 @@ const FFmpegOnline: React.FC = () => {
         } catch (error) {
             console.error('Failed to load FFmpeg:', error);
             setMessage('加载 FFmpeg 失败。请检查您的浏览器兼容性。');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -105,7 +114,10 @@ const FFmpegOnline: React.FC = () => {
         const file = event.target.files?.[0];
         if (file) {
             setSelectedFile(file);
-            setFileInfo(`文件名: ${file.name}, 大小: ${formatFileSize(file.size)}`);
+            setFileInfo({
+                name: file.name,
+                size: formatFileSize(file.size),
+            })
         }
     };
 
@@ -114,7 +126,10 @@ const FFmpegOnline: React.FC = () => {
         const file = event.dataTransfer.files?.[0];
         if (file) {
             setSelectedFile(file);
-            setFileInfo(`文件名: ${file.name}, 大小: ${formatFileSize(file.size)}`);
+            setFileInfo({
+                name: file.name,
+                size: formatFileSize(file.size),
+            })
         }
     };
 
@@ -143,16 +158,17 @@ const FFmpegOnline: React.FC = () => {
         try {
             // Clean up any existing files
             try {
-                await ffmpeg.deleteFile('input.mp4');
+                await ffmpeg.deleteFile('input');
                 await ffmpeg.deleteFile(outputFileName);
             } catch (e) {
+                console.log(e)
                 // Ignore errors if files don't exist
             }
 
             const fileData = await fetchFile(selectedFile);
-            await ffmpeg.writeFile('input.mp4', fileData);
+            await ffmpeg.writeFile('input', fileData);
 
-            let ffmpegCommand = ['-i', 'input.mp4'];
+            const ffmpegCommand = ['-i', 'input'];
 
             if (resolution !== 'original') {
                 ffmpegCommand.push('-vf', `scale=${resolution}`);
@@ -166,6 +182,7 @@ const FFmpegOnline: React.FC = () => {
                 }
             }
 
+            ffmpegCommand.push('-f', outputFormat);
             ffmpegCommand.push(outputFileName);
 
             await ffmpeg.exec(ffmpegCommand);
@@ -173,12 +190,12 @@ const FFmpegOnline: React.FC = () => {
             setMessage('转换完成！');
 
             const data = await ffmpeg.readFile(outputFileName);
-            const url = URL.createObjectURL(new Blob([data as ArrayBuffer]));
+            const url = URL.createObjectURL(new Blob([data as ArrayBuffer], { type: `video/${outputFormat}` }));
             setOutputUrl(url);
             setOutputFileSize(formatFileSize((data as ArrayBuffer).byteLength));
 
             // Clean up
-            await ffmpeg.deleteFile('input.mp4');
+            await ffmpeg.deleteFile('input');
             await ffmpeg.deleteFile(outputFileName);
         } catch (error) {
             console.error('FFmpeg 处理错误:', error);
@@ -199,7 +216,7 @@ const FFmpegOnline: React.FC = () => {
 
     const clearFile = () => {
         setSelectedFile(null);
-        setFileInfo('');
+        setFileInfo(null);
         setOutputUrl('');
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -207,7 +224,7 @@ const FFmpegOnline: React.FC = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6 space-y-6">
+        <div className="relative max-w-2xl mx-auto space-y-6">
             <h1 className="text-2xl font-bold mb-6">ffmpeg-online</h1>
 
             <div className="space-y-2">
@@ -219,17 +236,28 @@ const FFmpegOnline: React.FC = () => {
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                 >
-                    {selectedFile ? (
-                        <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-600">{selectedFile.name}</p>
-                            <Button variant="ghost" size="sm" onClick={(e) => {
-                                e.stopPropagation();
-                                clearFile();
-                            }}>
-                                <X className="h-4 w-4"/>
-                            </Button>
+                    {selectedFile && (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-2 bg-gray-100 rounded">
+                                <div className="flex-grow overflow-hidden">
+                                    <p className="text-sm font-medium truncate">{fileInfo?.name}</p>
+                                    <p className="text-xs text-gray-500">{fileInfo?.size}</p>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="ml-2 text-gray-500 hover:text-gray-700"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        clearFile();
+                                    }}
+                                >
+                                    <X className="h-4 w-4"/>
+                                </Button>
+                            </div>
                         </div>
-                    ) : (
+                    )}
+                    {!selectedFile && (
                         <>
                             <Inbox className="mx-auto h-12 w-12 text-gray-400"/>
                             <p className="mt-2">点击或拖拽文件</p>
@@ -243,11 +271,6 @@ const FFmpegOnline: React.FC = () => {
                         accept="video/*"
                     />
                 </div>
-                {fileInfo && (
-                    <div className="mt-2 p-2 bg-gray-100 rounded">
-                        <pre className="text-xs overflow-x-auto whitespace-pre-wrap">{fileInfo}</pre>
-                    </div>
-                )}
             </div>
 
             <div className="space-y-2">
@@ -305,27 +328,28 @@ const FFmpegOnline: React.FC = () => {
 
             <div className="space-y-2">
                 <h2 className="text-lg font-semibold">3. 运行并获取输出文件</h2>
-                <Button onClick={runFFmpeg} disabled={!ready || !selectedFile}>
-                    {ready ? '运行' : <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                <Button onClick={runFFmpeg} disabled={!ready || !selectedFile || isLoading} className="w-full md:w-48">
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            加载中
+                        </>
+                    ) : (
+                        '运行'
+                    )}
                 </Button>
                 {progress > 0 && (
                     <div className="relative pt-1">
                         <div className="flex mb-2 items-center justify-between">
-                            <div>
-                                <span
-                                    className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-teal-600 bg-teal-200">
-                                    进度
-                                </span>
-                            </div>
                             <div className="text-right">
-                                <span className="text-xs font-semibold inline-block text-teal-600">
+                                <span className="text-xs font-semibold inline-block text-blue-600">
                                     {progress}%
                                 </span>
                             </div>
                         </div>
-                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-teal-200">
+                        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
                             <div style={{width: `${progress}%`}}
-                                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-teal-500"></div>
+                                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
                         </div>
                     </div>
                 )}

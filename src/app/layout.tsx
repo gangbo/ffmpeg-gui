@@ -53,7 +53,7 @@ export default function RootLayout({
                         <ThemeToggle />
                     </nav>
                 </header>
-                <div className="flex-grow p-4">
+                <div className="flex-grow">
                     {children}
                 </div>
                 <footer className="bg-gray-200 dark:bg-gray-800 p-4 text-center text-sm text-gray-600 dark:text-gray-400">

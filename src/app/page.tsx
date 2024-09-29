@@ -3,9 +3,8 @@ import FFmpegOnline from "@/app/ffmpegGui";
 
 export default function Home() {
     return (
-        <main className="space-y-6 max-w-4xl mx-auto">
+        <main className="max-w-4xl p-2 mx-auto">
             <FFmpegOnline />
-
         </main>
     );
 }
