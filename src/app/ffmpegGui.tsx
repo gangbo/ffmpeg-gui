@@ -386,6 +386,8 @@ const FFmpegGui: React.FC = () => {
                             <div style={{width: `${progress}%`}}
                                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
                         </div>
+                        <p>
+                        </p>
                     </div>
                 )}
                 <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
