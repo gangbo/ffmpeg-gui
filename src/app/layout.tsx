@@ -49,7 +49,7 @@ export default function RootLayout({
                     {children}
                 </div>
                 <footer className="bg-gray-200 dark:bg-gray-800 p-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                    © 2024 FFmpeg GUI. 保留所有权利。
+                    © 2024 FFmpeg-GUI. All rights reserved.
                 </footer>
             </div>
         </ThemeProvider>
