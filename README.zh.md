@@ -14,19 +14,17 @@
 
 ## 2. 部署
 
-您可以使用以下一键部署链接将此项目部署到Vercel或Cloudflare:
+您可以使用以下一键部署链接将此项目部署到Vercel:
 
 - 部署到Vercel:
   [![使用Vercel部署](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/gangbo/ffmpeg-gui)
 
-- 部署到Cloudflare:
-  [![部署到Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/gangbo/ffmpeg-gui)
 
 注意:请将上述链接中的`gangbo/ffmpeg-gui`替换为您实际的GitHub用户名和仓库名。
 
 部署步骤:
 1. 点击上面的部署按钮。
-2. 登录或注册Vercel/Cloudflare账户。
+2. 登录或注册Vercel账户。
 3. 授权访问您的GitHub仓库。
 4. 选择您要部署的仓库和分支。
 5. 按照平台的说明完成部署过程。

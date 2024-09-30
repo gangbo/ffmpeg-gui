@@ -14,19 +14,17 @@ This project is a web-based Graphical User Interface (GUI) for FFmpeg. It allows
 
 ## 2. Deployment
 
-You can deploy this project to Vercel or Cloudflare using the following one-click deployment links:
+You can deploy this project to Vercel using the following one-click deployment links:
 
 - Deploy to Vercel:
   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/gangbo/ffmpeg-gui)
 
-- Deploy to Cloudflare:
-  [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/gangbo/ffmpeg-gui)
 
 Note: Replace `gangbo/ffmpeg-gui` in the above links with your actual GitHub username and repository name.
 
 Deployment Steps:
 1. Click on the deployment button above.
-2. Log in or sign up for a Vercel/Cloudflare account.
+2. Log in or sign up for a Vercel account.
 3. Authorize access to your GitHub repository.
 4. Select the repository and branch you want to deploy.
 5. Follow the platform's instructions to complete the deployment process.
